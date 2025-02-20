@@ -43,6 +43,11 @@ export const fetchPosts = async (): Promise<Post[]> => {
   return response.data;
 };
 
+export const fetchUsers = async (): Promise<User[]> => {
+  const response = await api.get<User[]>('/users');
+  return response.data;
+};
+
 export const fetchPost = async (id: number): Promise<Post> => {
   const response = await api.get<Post>(`/posts/${id}`);
   return response.data;
