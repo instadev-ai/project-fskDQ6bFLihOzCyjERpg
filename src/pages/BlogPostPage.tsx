@@ -12,185 +12,229 @@ import "prismjs/components/prism-bash";
 import "prismjs/components/prism-json";
 import { useEffect } from "react";
 
-interface BlogPost {
-  title: string;
-  content: any[];
-  date: string;
-  readTime: string;
-  category: string;
-  tags: string[];
-  author: {
-    name: string;
-    avatar: string;
-  };
-}
-
-// This would typically come from an API or CMS
-const post: BlogPost = {
-  title: "Getting Started with TypeScript",
+const post = {
+  title: "API Fetching with TypeScript and Axios",
   content: [
     {
       type: "paragraph",
-      content: "TypeScript is a powerful superset of JavaScript that adds static typing to the language. This makes it easier to write and maintain large applications by catching errors early in development."
+      content: "Learn how to build type-safe API calls using TypeScript and Axios. We'll cover setting up Axios, creating typed API functions, and handling responses with proper TypeScript types."
     },
     {
       type: "heading",
-      content: "Why TypeScript?"
+      content: "Setting Up Axios with TypeScript"
     },
     {
       type: "paragraph",
-      content: "TypeScript offers several benefits over plain JavaScript:"
-    },
-    {
-      type: "list",
-      items: [
-        "Static typing",
-        "Better IDE support",
-        "Enhanced code readability",
-        "Improved maintainability"
-      ]
-    },
-    {
-      type: "heading",
-      content: "Getting Started"
-    },
-    {
-      type: "paragraph",
-      content: "To start using TypeScript in your project, you first need to install it:"
+      content: "First, let's install the required dependencies:"
     },
     {
       type: "code",
       language: "bash",
-      content: "npm install typescript --save-dev"
+      content: "npm install axios @tanstack/react-query"
     },
     {
       type: "paragraph",
-      content: "Then, create a tsconfig.json file:"
+      content: "Create a base API configuration with proper types:"
     },
     {
       type: "code",
-      language: "json",
-      content: `{
-  "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  }
+      language: "typescript",
+      content: `import axios from 'axios';
+
+// Base API configuration
+export const api = axios.create({
+  baseURL: 'https://api.example.com',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// API response types
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+}
+
+export interface Post {
+  id: number;
+  title: string;
+  content: string;
+  userId: number;
+  createdAt: string;
 }`
     },
     {
       type: "heading",
-      content: "Basic Types"
+      content: "Creating Type-Safe API Functions"
     },
     {
       type: "paragraph",
-      content: "TypeScript includes several basic types:"
+      content: "Let's create strongly-typed API functions using TypeScript:"
     },
     {
       type: "code",
       language: "typescript",
-      content: `// Basic types
-const isDone: boolean = false;
-const decimal: number = 6;
-const color: string = "blue";
-const list: number[] = [1, 2, 3];
+      content: `// API functions with proper typing
+export const fetchUsers = async (): Promise<User[]> => {
+  const response = await api.get<User[]>('/users');
+  return response.data;
+};
 
-// Object type
-interface Point {
-  x: number;
-  y: number;
-}
+export const fetchUser = async (id: number): Promise<User> => {
+  const response = await api.get<User>(\`/users/\${id}\`);
+  return response.data;
+};
 
-const point: Point = { x: 10, y: 20 };
+export const createUser = async (user: Omit<User, 'id'>): Promise<User> => {
+  const response = await api.post<User>('/users', user);
+  return response.data;
+};
 
-// Union types
-type Status = "pending" | "completed" | "failed";
-const taskStatus: Status = "pending";
-
-// Generic type
-function identity<T>(arg: T): T {
-  return arg;
-}`
+export const updateUser = async (
+  id: number, 
+  user: Partial<User>
+): Promise<User> => {
+  const response = await api.put<User>(\`/users/\${id}\`, user);
+  return response.data;
+};`
     },
     {
       type: "heading",
-      content: "Interfaces and Types"
+      content: "Using with React Query"
     },
     {
       type: "paragraph",
-      content: "TypeScript's interfaces are powerful tools for defining contracts in your code:"
+      content: "React Query makes it easy to manage server state in React applications. Here's how to use it with our typed API functions:"
     },
     {
       type: "code",
       language: "typescript",
-      content: `// Interface definition
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  isAdmin?: boolean;  // Optional property
-  readonly createdAt: Date;  // Read-only property
+      content: `import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchUsers, createUser, User } from '../lib/api';
+
+// Component using the API
+const UserList = () => {
+  const queryClient = useQueryClient();
+
+  // Query for fetching users
+  const { data: users, isLoading, error } = useQuery<User[]>({
+    queryKey: ['users'],
+    queryFn: fetchUsers,
+  });
+
+  // Mutation for creating a user
+  const createUserMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      // Invalidate and refetch users query
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {users?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>{user.email}</p>
+        </div>
+      ))}
+    </div>
+  );
+};`
+    },
+    {
+      type: "heading",
+      content: "Error Handling"
+    },
+    {
+      type: "paragraph",
+      content: "Let's implement proper error handling with TypeScript:"
+    },
+    {
+      type: "code",
+      language: "typescript",
+      content: `// Custom error type
+interface ApiError {
+  message: string;
+  code: number;
+  details?: Record<string, string[]>;
 }
 
-// Implementing an interface
-class Employee implements User {
-  id: number;
-  name: string;
-  email: string;
-  readonly createdAt: Date;
-
-  constructor(id: number, name: string, email: string) {
-    this.id = id;
-    this.name = name;
-    this.email = email;
-    this.createdAt = new Date();
+// Error handling wrapper
+const handleApiError = (error: unknown): never => {
+  if (axios.isAxiosError(error)) {
+    const apiError: ApiError = {
+      message: error.response?.data?.message || error.message,
+      code: error.response?.status || 500,
+      details: error.response?.data?.details,
+    };
+    throw apiError;
   }
-}
-
-// Using the interface
-const user: User = {
-  id: 1,
-  name: "John Doe",
-  email: "john@example.com",
-  createdAt: new Date()
+  throw new Error('An unexpected error occurred');
 };
 
-// Type aliases
-type UserRole = "admin" | "user" | "guest";
-type UserWithRole = User & { role: UserRole };`
+// Using the error handler
+export const fetchUserSafely = async (id: number): Promise<User> => {
+  try {
+    const response = await api.get<User>(\`/users/\${id}\`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};`
     },
     {
       type: "heading",
-      content: "Advanced Features"
+      content: "Request Interceptors"
     },
     {
       type: "paragraph",
-      content: "TypeScript also includes advanced features like generics and utility types:"
+      content: "Add type-safe request and response interceptors:"
     },
     {
       type: "code",
       language: "typescript",
-      content: `// Generic interface
-interface Repository<T> {
-  get(id: number): Promise<T>;
-  save(item: T): Promise<void>;
-}
+      content: `// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token && config.headers) {
+    config.headers.Authorization = \`Bearer \${token}\`;
+  }
+  return config;
+});
 
-// Utility types
-type UserPartial = Partial<User>;  // All properties become optional
-type UserReadonly = Readonly<User>;  // All properties become readonly
-
-// Mapped types
-type Nullable<T> = {
-  [P in keyof T]: T[P] | null;
-};
-
-// Conditional types
-type ExtractArray<T> = T extends Array<infer U> ? U : never;
-type ItemType = ExtractArray<string[]>;  // Results in string`
+// Handle response errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);`
+    },
+    {
+      type: "heading",
+      content: "Best Practices"
+    },
+    {
+      type: "list",
+      items: [
+        "Always define proper types for API responses",
+        "Use TypeScript's utility types like Partial<T> and Omit<T, K>",
+        "Implement proper error handling with type checking",
+        "Use React Query for efficient server state management",
+        "Add type-safe interceptors for common operations"
+      ]
     },
     {
       type: "heading",
@@ -198,13 +242,13 @@ type ItemType = ExtractArray<string[]>;  // Results in string`
     },
     {
       type: "paragraph",
-      content: "TypeScript provides a robust type system that helps catch errors early in development while maintaining compatibility with JavaScript. Its features like interfaces, generics, and utility types make it an excellent choice for large-scale applications."
+      content: "Using TypeScript with Axios provides excellent type safety and autocompletion support, making API integrations more reliable and maintainable. Combined with React Query, it creates a robust foundation for handling server state in React applications."
     }
   ],
-  date: "March 15, 2024",
-  readTime: "5 min read",
+  date: "March 20, 2024",
+  readTime: "8 min read",
   category: "Development",
-  tags: ["TypeScript", "JavaScript", "Web Development"],
+  tags: ["TypeScript", "API", "Axios", "React"],
   author: {
     name: "John Doe",
     avatar: "/placeholder.svg"
@@ -212,8 +256,6 @@ type ItemType = ExtractArray<string[]>;  // Results in string`
 };
 
 const BlogPostPage = () => {
-  const { slug } = useParams();
-
   useEffect(() => {
     Prism.highlightAll();
   }, []);

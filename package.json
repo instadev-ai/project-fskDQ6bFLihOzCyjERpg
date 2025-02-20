@@ -61,7 +61,8 @@
     "vaul": "^0.9.3",
     "zod": "^3.23.8",
     "prismjs": "^1.29.0",
-    "framer-motion": "^12.4.5"
+    "framer-motion": "^12.4.5",
+    "axios": "^1.7.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
@@ -81,6 +82,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
-    "@types/prismjs": "^1.26.5"
+    "@types/prismjs": "^1.26.5",
+    "@types/axios": "^0.14.4"
   }
 }
