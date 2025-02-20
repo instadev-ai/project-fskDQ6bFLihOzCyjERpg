@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-jsx";
+import "prismjs/components/prism-tsx";
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-json";
 import { useEffect } from "react";
 
 interface BlogPost {
   title: string;
-  content: string[];
+  content: any[];
   date: string;
   readTime: string;
   category: string;
@@ -71,7 +74,10 @@ const post: BlogPost = {
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",
-    "strict": true
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   }
 }`
     },
@@ -86,31 +92,105 @@ const post: BlogPost = {
     {
       type: "code",
       language: "typescript",
-      content: `let isDone: boolean = false;
-let decimal: number = 6;
-let color: string = "blue";
-let list: number[] = [1, 2, 3];`
+      content: `// Basic types
+const isDone: boolean = false;
+const decimal: number = 6;
+const color: string = "blue";
+const list: number[] = [1, 2, 3];
+
+// Object type
+interface Point {
+  x: number;
+  y: number;
+}
+
+const point: Point = { x: 10, y: 20 };
+
+// Union types
+type Status = "pending" | "completed" | "failed";
+const taskStatus: Status = "pending";
+
+// Generic type
+function identity<T>(arg: T): T {
+  return arg;
+}`
     },
     {
       type: "heading",
-      content: "Interfaces"
+      content: "Interfaces and Types"
     },
     {
       type: "paragraph",
-      content: "Interfaces are one of TypeScript's core features:"
+      content: "TypeScript's interfaces are powerful tools for defining contracts in your code:"
     },
     {
       type: "code",
       language: "typescript",
-      content: `interface User {
-  name: string;
+      content: `// Interface definition
+interface User {
   id: number;
+  name: string;
+  email: string;
+  isAdmin?: boolean;  // Optional property
+  readonly createdAt: Date;  // Read-only property
 }
 
+// Implementing an interface
+class Employee implements User {
+  id: number;
+  name: string;
+  email: string;
+  readonly createdAt: Date;
+
+  constructor(id: number, name: string, email: string) {
+    this.id = id;
+    this.name = name;
+    this.email = email;
+    this.createdAt = new Date();
+  }
+}
+
+// Using the interface
 const user: User = {
-  name: "John",
   id: 1,
-};`
+  name: "John Doe",
+  email: "john@example.com",
+  createdAt: new Date()
+};
+
+// Type aliases
+type UserRole = "admin" | "user" | "guest";
+type UserWithRole = User & { role: UserRole };`
+    },
+    {
+      type: "heading",
+      content: "Advanced Features"
+    },
+    {
+      type: "paragraph",
+      content: "TypeScript also includes advanced features like generics and utility types:"
+    },
+    {
+      type: "code",
+      language: "typescript",
+      content: `// Generic interface
+interface Repository<T> {
+  get(id: number): Promise<T>;
+  save(item: T): Promise<void>;
+}
+
+// Utility types
+type UserPartial = Partial<User>;  // All properties become optional
+type UserReadonly = Readonly<User>;  // All properties become readonly
+
+// Mapped types
+type Nullable<T> = {
+  [P in keyof T]: T[P] | null;
+};
+
+// Conditional types
+type ExtractArray<T> = T extends Array<infer U> ? U : never;
+type ItemType = ExtractArray<string[]>;  // Results in string`
     },
     {
       type: "heading",
@@ -118,7 +198,7 @@ const user: User = {
     },
     {
       type: "paragraph",
-      content: "TypeScript is an excellent choice for large-scale JavaScript projects. It provides the benefits of static typing while maintaining the flexibility of JavaScript."
+      content: "TypeScript provides a robust type system that helps catch errors early in development while maintaining compatibility with JavaScript. Its features like interfaces, generics, and utility types make it an excellent choice for large-scale applications."
     }
   ],
   date: "March 15, 2024",
@@ -140,23 +220,23 @@ const BlogPostPage = () => {
 
   const renderContent = (content: any) => {
     if (content.type === "paragraph") {
-      return <p className="mb-4">{content.content}</p>;
+      return <p className="mb-4 text-lg leading-relaxed">{content.content}</p>;
     }
     if (content.type === "heading") {
       return <h2 className="text-2xl font-bold mt-8 mb-4">{content.content}</h2>;
     }
     if (content.type === "list") {
       return (
-        <ul className="list-disc list-inside mb-4">
+        <ul className="list-disc list-inside mb-4 space-y-2">
           {content.items.map((item: string, index: number) => (
-            <li key={index} className="mb-2">{item}</li>
+            <li key={index} className="text-lg">{item}</li>
           ))}
         </ul>
       );
     }
     if (content.type === "code") {
       return (
-        <pre className="mb-4 rounded-lg overflow-x-auto">
+        <pre className="mb-6 rounded-lg overflow-x-auto bg-[#1e1e1e] p-4">
           <code className={`language-${content.language}`}>
             {content.content}
           </code>
@@ -192,7 +272,7 @@ const BlogPostPage = () => {
               </div>
             </div>
 
-            <div className="mb-8">
+            <div className="mb-12">
               <h1 className="text-4xl font-bold tracking-tight mb-4">{post.title}</h1>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{post.category}</Badge>
@@ -204,7 +284,7 @@ const BlogPostPage = () => {
               </div>
             </div>
 
-            <div className="prose prose-slate max-w-none">
+            <div className="prose prose-lg prose-slate max-w-none">
               {post.content.map((section, index) => (
                 <div key={index}>{renderContent(section)}</div>
               ))}
